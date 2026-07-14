@@ -10,6 +10,9 @@
 
 <script>
 
+let editCategoryId = null;
+let editMode = false;
+
 async function deleteCategory(id) {
 
     if (!confirm("Delete this category?")) {
@@ -32,6 +35,22 @@ async function deleteCategory(id) {
 
 }
 
+function editCategory(id) {
+
+    editMode = true;
+    editCategoryId = id;
+    
+
+    const row = event.target.closest("tr");
+
+    const categoryName = row.cells[1].innerText;
+
+    document.getElementById("category-name").value = categoryName;
+    document.getElementById("category-button").innerText = "Update Category";
+
+}
+
+
 async function loadCategories() {
 
     const response = await fetch("/categories");
@@ -49,6 +68,12 @@ async function loadCategories() {
             <td>${category.id}</td>
             <td>${category.name}</td>
             <td>
+                <button
+                    class="btn btn-primary btn-sm me-2"
+                    onclick="editCategory(${category.id})">
+                    Edit
+                </button>
+
                 <button
                     class="btn btn-danger btn-sm"
                     onclick="deleteCategory(${category.id})">
@@ -68,17 +93,37 @@ async function addCategory() {
         name: document.getElementById("category-name").value
     };
 
-    const response = await fetch("/categories", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(category)
-    });
+    let response;
+
+    if (editMode) {
+
+        response = await fetch(`/categories/${editCategoryId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(category)
+        });
+
+    } else {
+
+        response = await fetch("/categories", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(category)
+        });
+
+    }
 
     if (response.ok) {
 
         document.getElementById("category-name").value = "";
+
+        editMode = false;
+        editCategoryId = null;
+        document.getElementById("category-button").innerText = "Add Category";
 
         loadCategories();
 
@@ -110,6 +155,7 @@ loadCategories();
             placeholder="Category Name">
 
         <button
+            id="category-button"
             class="btn btn-success"
             onclick="addCategory()">
             Add Category

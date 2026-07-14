@@ -9,7 +9,7 @@ router = APIRouter()
 
 @router.get("/categories", response_model=list[CategoryResponse])
 def get_categories(db: Session = Depends(get_db)):
-    categories = db.query(Category).all()
+    categories = db.query(Category).order_by(Category.id).all()
 
     return categories
 
