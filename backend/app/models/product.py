@@ -22,3 +22,7 @@ class Product(Base):
     )
     
     category = relationship("Category")
+
+    @property
+    def category_name(self):
+        return self.category.name

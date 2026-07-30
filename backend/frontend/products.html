@@ -10,12 +10,15 @@
 
 <script>
 
+let categories = [];
+
 async function loadProducts() {
 
     const response = await fetch("/products");
 
     const products = await response.json();
 
+    
     const table = document.getElementById("products-table");
 
     table.innerHTML = "";
@@ -23,12 +26,27 @@ async function loadProducts() {
     products.forEach(product => {
 
         table.innerHTML += `
-            <tr>
+            <tr id="product-${product.id}">
                 <td>${product.id}</td>
                 <td>${product.name}</td>
                 <td>${product.description}</td>
                 <td>${product.quantity}</td>
                 <td>${product.price}</td>
+                <td>${product.category_name}</td>
+
+                <td>
+                    <button
+                        class="btn btn-warning btn-sm"
+                        onclick="editProduct(${product.id})">
+                        Edit
+                    </button>
+
+                    <button
+                        class="btn btn-warning btn-sm"
+                        onclick="deleteProduct(${product.id})">
+                        Delete
+                    </button>
+                </td>
             </tr>
         `;
 
@@ -66,7 +84,9 @@ async function loadCategories() {
 
     const response = await fetch("/categories");
 
-    const categories = await response.json();
+    const data = await response.json();
+
+    categories = data;
 
     const select = document.getElementById("category_id");
 
@@ -83,8 +103,139 @@ async function loadCategories() {
     });
 
 }
-loadCategories();
-loadProducts();
+
+function editProduct(id) {
+
+    const row = document.getElementById(`product-${id}`);
+
+    const cells = row.getElementsByTagName("td");
+
+    const name = cells[1].innerText;
+    const description = cells[2].innerText;
+    const quantity = cells[3].innerText;
+    const price = cells[4].innerText;
+    const categoryName = cells[5].innerText;
+
+    let categoryOptions = "";
+
+    categories.forEach(category => {
+
+        categoryOptions += `
+            <option
+                value="${category.id}"
+                ${category.name === categoryName ? "selected" : ""}>
+                ${category.name}
+            </option>
+    `   ;
+
+    });
+
+    row.innerHTML = `
+        <td>${id}</td>
+
+        <td>
+            <input
+                id="edit-name-${id}"
+                class="form-control"
+                value="${name}">
+        </td>
+
+        <td>
+            <input
+                id="edit-description-${id}"
+                class="form-control"
+                value="${description}">
+        </td>
+
+        <td>
+            <input
+                id="edit-quantity-${id}"
+                class="form-control"
+                type="number"
+                value="${quantity}">
+        </td>
+
+        <td>
+            <input
+                id="edit-price-${id}"
+                class="form-control"
+                type="number"
+                value="${price}">
+        </td>
+
+        <td>
+            <select
+                id="edit-category-${id}"
+                class="form-select">
+
+                ${categoryOptions}
+
+            </select>
+        </td>
+
+        <td>
+            <button
+                class="btn btn-success btn-sm"
+                onclick="saveProduct(${id})">
+                Save
+            </button>
+        </td>
+    `;
+
+}
+
+function saveProduct(id) {
+
+    const name = document.getElementById(`edit-name-${id}`).value;
+    const description = document.getElementById(`edit-description-${id}`).value;
+    const quantity = document.getElementById(`edit-quantity-${id}`).value;
+    const price = document.getElementById(`edit-price-${id}`).value;
+    const categoryId = document.getElementById(`edit-category-${id}`).value;
+
+    const product = {
+        name: name,
+        description: description,
+        quantity: Number(quantity),
+        price: Number(price),
+        category_id: Number(categoryId)
+    };
+
+    console.log(product);
+
+    fetch(`http://localhost:8000/products/${id}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(product)
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data);
+        loadProducts();
+    });
+}
+
+function deleteProduct(id) {
+
+    if (!confirm("Are you sure you want to delete this product?")) {
+        return;
+    }
+
+    fetch(`http://localhost:8000/products/${id}`, {
+        method: "DELETE"
+    })
+    .then(response => {
+
+        if (response.ok) {
+            loadProducts();
+        } else {
+            alert("Error deleting product");
+        }
+
+    });
+
+}
 
 </script>
 
@@ -140,6 +291,8 @@ loadProducts();
                 <th>Description</th>
                 <th>Quantity</th>
                 <th>Price</th>
+                <th>Category</th>
+                <th>Actions</th>
             </tr>
         </thead>
 
@@ -150,6 +303,14 @@ loadProducts();
     </table>
 
 </div>
+
+<script>
+window.onload = async function () {
+    await loadCategories();
+    await loadProducts();
+};
+</script>
+
 
 </body>
 

@@ -16,6 +16,7 @@ class ProductResponse(BaseModel):
     quantity: int
     price: float
     category_id: int
+    category_name: str
 
     class Config:
         from_attributes = True
