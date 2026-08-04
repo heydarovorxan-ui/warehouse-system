@@ -37,3 +37,7 @@ def products_page():
 @app.get("/categories-page")
 def categories_page():
     return FileResponse("frontend/categories.html")
+
+@app.get("/orders-page")
+def orders_page():
+    return FileResponse("frontend/orders.html")

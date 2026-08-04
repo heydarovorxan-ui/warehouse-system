@@ -89,3 +89,21 @@ def get_order_details(
             for order_item, product in items
         ]
     }
+
+@router.put("/orders/{order_id}/confirm", response_model=OrderResponse)
+def confirm_order(
+    order_id: int,
+    db: Session = Depends(get_db)
+):
+
+    order = db.get(Order, order_id)
+
+    if order is None:
+        return None
+
+    order.status = "CONFIRMED"
+
+    db.commit()
+    db.refresh(order)
+
+    return order
