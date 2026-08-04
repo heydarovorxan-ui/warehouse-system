@@ -101,6 +101,27 @@ def confirm_order(
     if order is None:
         return None
 
+    items = (
+        db.query(OrderItem)
+        .filter(OrderItem.order_id == order_id)
+        .all()
+    )
+
+    for item in items:
+
+        product = db.get(Product, item.product_id)
+
+        if product.quantity < item.quantity:
+            return {
+                "message": f"Not enough stock for {product.name}"
+            }
+
+        for item in items:
+
+            product = db.get(Product, item.product_id)
+
+            product.quantity -= item.quantity
+
     order.status = "CONFIRMED"
 
     db.commit()
