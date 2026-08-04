@@ -134,7 +134,9 @@ async function confirmOrder(orderId) {
     }
     else {
 
-        alert("Error confirming order");
+        const error = await response.json();
+
+        alert(error.detail);
 
     }
 

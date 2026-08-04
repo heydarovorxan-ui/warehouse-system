@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
@@ -112,9 +112,10 @@ def confirm_order(
         product = db.get(Product, item.product_id)
 
         if product.quantity < item.quantity:
-            return {
-                "message": f"Not enough stock for {product.name}"
-            }
+            raise HTTPException(
+                status_code=400,
+                detail=f"Not enough stock for {product.name}"
+            )
 
         for item in items:
 
