@@ -5,6 +5,7 @@ from app.database.database import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate, UserResponse
 from app.schemas.login import LoginRequest
+from app.security import create_access_token
 
 router = APIRouter()
 
@@ -54,7 +55,15 @@ def login(
             "message": "Invalid username or password"
         }
 
+    token = create_access_token(
+        {
+            "username": user.username,
+            "role": user.role
+        }
+    )
+
     return {
-        "message": "Login successful",
+        "access_token": token,
+        "token_type": "bearer",
         "role": user.role
     }

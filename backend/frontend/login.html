@@ -26,10 +26,28 @@ async function login() {
 
     const data = await response.json();
 
-    if (data.message === "Login successful") {
-        window.location.href = "/products-page";
-    } else {
+    if (data.access_token) {
+
+        localStorage.setItem(
+            "token",
+            data.access_token
+        );
+
+        if (data.role === "admin") {
+         window.location.href = "/products-page";
+        }
+        else if (data.role === "warehouse") {
+            window.location.href = "/orders-page";
+        }
+        else if (data.role === "expeditor") {
+            window.location.href = "/orders-page";
+        }
+
+    }
+    else {
+
         alert("Invalid username or password");
+
     }
 }
 </script>
