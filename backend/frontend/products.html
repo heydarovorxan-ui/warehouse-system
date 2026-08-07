@@ -14,7 +14,17 @@ let categories = [];
 
 async function loadProducts() {
 
-    const response = await fetch("/products");
+    const token = localStorage.getItem("token");
+
+    const response = await fetch("/products", {
+
+        headers: {
+
+            Authorization: `Bearer ${token}`
+
+        }
+
+    });
 
     const products = await response.json();
 
