@@ -26,6 +26,15 @@ async function loadProducts() {
 
     });
 
+    if (response.status === 401) {
+
+        localStorage.removeItem("token");
+
+        window.location.href = "/login";
+
+        return;
+    }
+
     const products = await response.json();
 
     
