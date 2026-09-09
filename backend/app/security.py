@@ -11,7 +11,7 @@ SECRET_KEY = "my-super-secret-key"
 ALGORITHM = "HS256"
 
 oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/login"
+    tokenUrl="/login/oauth2"
 )
 
 def create_access_token(data: dict):
