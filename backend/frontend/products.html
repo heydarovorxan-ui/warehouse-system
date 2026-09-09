@@ -83,10 +83,13 @@ async function addProduct() {
         category_id: Number(document.getElementById("category_id").value)
     };
 
+    const token = localStorage.getItem("token");
+
     const response = await fetch("/products", {
         method: "POST",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
         },
         body: JSON.stringify(product)
     });
@@ -101,10 +104,22 @@ async function addProduct() {
 
 async function loadCategories() {
 
-    const response = await fetch("/categories");
+    const token = localStorage.getItem("token");
+
+    const response = await fetch("/categories", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+
+    if (response.status === 401) {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+        return;
+    }
 
     const data = await response.json();
-
+    
     categories = data;
 
     const select = document.getElementById("category_id");
@@ -227,10 +242,13 @@ function saveProduct(id) {
 
     console.log(product);
 
+    const token = localStorage.getItem("token");
+
     fetch(`http://localhost:8000/products/${id}`, {
         method: "PUT",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
         },
         body: JSON.stringify(product)
     })
@@ -247,8 +265,13 @@ function deleteProduct(id) {
         return;
     }
 
+    const token = localStorage.getItem("token");
+
     fetch(`http://localhost:8000/products/${id}`, {
-        method: "DELETE"
+        method: "DELETE",
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
     })
     .then(response => {
 

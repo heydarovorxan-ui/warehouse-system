@@ -5,7 +5,7 @@ from app.database.database import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate, UserResponse
 from app.schemas.login import LoginRequest
-from app.security import create_access_token
+from app.security import create_access_token, require_roles
 
 router = APIRouter()
 
@@ -32,6 +32,29 @@ def get_users(db: Session = Depends(get_db)):
     users = db.query(User).all()
 
     return users
+
+
+@router.put("/users/{user_id}/reset-password")
+def reset_password(
+    user_id: int,
+    new_password: str,
+    current_user = Depends(require_roles("admin")),
+    db: Session = Depends(get_db)
+):
+    user = db.get(User, user_id)
+
+    if user is None:
+        return {
+            "message": "User not found"
+        }
+
+    user.password = new_password
+
+    db.commit()
+
+    return {
+        "message": "Password reset successfully"
+    }
 
 
 @router.post("/login")

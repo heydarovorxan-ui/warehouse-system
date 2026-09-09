@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+from app.security import require_roles
 
 from app.database.database import get_db
 from app.models.order_item import OrderItem
@@ -14,6 +15,7 @@ router = APIRouter()
 @router.post("/order-items", response_model=OrderItemResponse)
 def create_order_item(
     order_item: OrderItemCreate,
+    current_user = Depends(require_roles("admin")),
     db: Session = Depends(get_db)
 ):
     new_order_item = OrderItem(
@@ -29,7 +31,11 @@ def create_order_item(
     return new_order_item
 
 @router.get("/order-items", response_model=list[OrderItemResponse])
-def get_order_items(db: Session = Depends(get_db)):
+def get_order_items(
+    current_user = Depends(require_roles("admin", "warehouse", "expeditor")),
+    db: Session = Depends(get_db)
+):
+
     order_items = db.query(OrderItem).all()
 
     return order_items

@@ -4,11 +4,15 @@ from sqlalchemy.orm import Session
 from app.database.database import get_db
 from app.models.category import Category
 from app.schemas.category import CategoryCreate, CategoryResponse
+from app.security import get_current_user, require_roles
 
 router = APIRouter()
 
 @router.get("/categories", response_model=list[CategoryResponse])
-def get_categories(db: Session = Depends(get_db)):
+def get_categories(
+    current_user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     categories = db.query(Category).order_by(Category.id).all()
 
     return categories
@@ -16,6 +20,7 @@ def get_categories(db: Session = Depends(get_db)):
 @router.get("/categories/{category_id}", response_model=CategoryResponse)
 def get_category(
     category_id: int,
+    current_user = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     category = db.get(Category, category_id)
@@ -31,6 +36,7 @@ def get_category(
 @router.post("/categories")
 def create_category(
     category: CategoryCreate,
+    current_user = Depends(require_roles("admin")),
     db: Session = Depends(get_db)
 ):
     new_category = Category(
@@ -49,6 +55,7 @@ def create_category(
 def update_category(
     category_id: int,
     category_data: CategoryCreate,
+    current_user = Depends(require_roles("admin")),
     db: Session = Depends(get_db)
 ):
     category = db.get(Category, category_id)
@@ -70,6 +77,7 @@ def update_category(
 @router.delete("/categories/{category_id}")
 def delete_category(
     category_id: int,
+    current_user = Depends(require_roles("admin")),
     db: Session = Depends(get_db)
 ):
     category = db.get(Category, category_id)

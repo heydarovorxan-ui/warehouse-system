@@ -7,6 +7,7 @@ from app.schemas.order import OrderCreate, OrderResponse, OrderDetails
 from app.models.order_item import OrderItem
 from app.models.product import Product
 from app.schemas.order_item import OrderItemDetails
+from app.security import require_roles, get_current_user
 
 router = APIRouter()
 
@@ -29,7 +30,10 @@ def create_order(
     return new_order
 
 @router.get("/orders", response_model=list[OrderResponse])
-def get_orders(db: Session = Depends(get_db)):
+def get_orders(
+    current_user = Depends(require_roles("admin", "warehouse", "expeditor")),
+    db: Session = Depends(get_db)
+):
     orders = db.query(Order).all()
 
     return orders
@@ -40,6 +44,7 @@ def get_orders(db: Session = Depends(get_db)):
 )
 def get_order_items_by_order(
     order_id: int,
+    current_user = Depends(require_roles("admin", "warehouse", "expeditor")),
     db: Session = Depends(get_db)
 ):
     items = (
@@ -61,6 +66,7 @@ def get_order_items_by_order(
 @router.get("/orders/{order_id}", response_model=OrderDetails)
 def get_order_details(
     order_id: int,
+    current_user = Depends(require_roles("admin", "warehouse", "expeditor")),
     db: Session = Depends(get_db)
 ):
     order = db.get(Order, order_id)
@@ -93,9 +99,9 @@ def get_order_details(
 @router.put("/orders/{order_id}/confirm", response_model=OrderResponse)
 def confirm_order(
     order_id: int,
+    current_user = Depends(require_roles("admin", "warehouse")),
     db: Session = Depends(get_db)
 ):
-
     order = db.get(Order, order_id)
 
     if order is None:
@@ -107,8 +113,8 @@ def confirm_order(
         .all()
     )
 
+    
     for item in items:
-
         product = db.get(Product, item.product_id)
 
         if product.quantity < item.quantity:
@@ -117,11 +123,10 @@ def confirm_order(
                 detail=f"Not enough stock for {product.name}"
             )
 
-        for item in items:
-
-            product = db.get(Product, item.product_id)
-
-            product.quantity -= item.quantity
+    
+    for item in items:
+        product = db.get(Product, item.product_id)
+        product.quantity -= item.quantity
 
     order.status = "CONFIRMED"
 
