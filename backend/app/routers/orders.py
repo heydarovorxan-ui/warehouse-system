@@ -8,6 +8,7 @@ from app.models.order_item import OrderItem
 from app.models.product import Product
 from app.schemas.order_item import OrderItemDetails
 from app.security import require_roles, get_current_user
+from app.models.stock_movement import StockMovement
 
 router = APIRouter()
 
@@ -127,6 +128,17 @@ def confirm_order(
     for item in items:
         product = db.get(Product, item.product_id)
         product.quantity -= item.quantity
+
+        new_movement = StockMovement(
+            product_id=item.product_id,
+            quantity=-item.quantity,
+            movement_type="ORDER",
+            reason=f"Order #{order.id}",
+            user_id=current_user.id,
+            order_id=order.id
+        )
+
+        db.add(new_movement)
 
     order.status = "CONFIRMED"
 

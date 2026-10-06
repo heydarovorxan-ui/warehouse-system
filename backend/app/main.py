@@ -10,6 +10,8 @@ from app.routers.orders import router as orders_router
 from app.models.order_item import OrderItem
 from app.routers.order_items import router as order_items_router
 from fastapi.responses import FileResponse
+from app.models.stock_movement import StockMovement
+from app.routers.stock_movements import router as stock_movements_router
 
 app = FastAPI()
 
@@ -18,6 +20,7 @@ app.include_router(products_router)
 app.include_router(users_router)
 app.include_router(orders_router)
 app.include_router(order_items_router)
+app.include_router(stock_movements_router)
 
 Base.metadata.create_all(bind=engine)
 
@@ -41,3 +44,7 @@ def categories_page():
 @app.get("/orders-page")
 def orders_page():
     return FileResponse("frontend/orders.html")
+
+@app.get("/stock-movements-page")
+def stock_movements_page():
+    return FileResponse("frontend/stock-movements.html")
