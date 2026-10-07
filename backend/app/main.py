@@ -12,8 +12,15 @@ from app.routers.order_items import router as order_items_router
 from fastapi.responses import FileResponse
 from app.models.stock_movement import StockMovement
 from app.routers.stock_movements import router as stock_movements_router
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
+
+app.mount(
+    "/static",
+    StaticFiles(directory="frontend"),
+    name="static"
+)
 
 app.include_router(categories_router)
 app.include_router(products_router)
@@ -48,3 +55,7 @@ def orders_page():
 @app.get("/stock-movements-page")
 def stock_movements_page():
     return FileResponse("frontend/stock-movements.html")
+
+@app.get("/users-page")
+def users_page():
+    return FileResponse("frontend/users.html")

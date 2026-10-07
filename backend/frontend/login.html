@@ -33,6 +33,11 @@ async function login() {
             data.access_token
         );
 
+        localStorage.setItem(
+            "role",
+            data.role
+        );
+
         if (data.role === "admin") {
          window.location.href = "/products-page";
         }

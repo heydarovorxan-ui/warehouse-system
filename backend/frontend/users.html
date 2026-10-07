@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Users</title>
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet">
+
+    <script src="/static/js/navigation.js"></script>
+
+</head>
+
+<script>
+
+async function loadUsers() {
+
+    const token = localStorage.getItem("token");
+
+    const response = await fetch("/users", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+
+    if (response.status === 401) {
+
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+
+        window.location.href = "/login";
+
+        return;
+    }
+
+    if (response.status === 403) {
+
+        alert("Access denied");
+        window.location.href = "/products-page";
+
+        return;
+    }
+
+    const users = await response.json();
+
+    const table = document.getElementById("users-table");
+
+    table.innerHTML = "";
+
+    users.forEach(user => {
+
+        table.innerHTML += `
+
+            <tr>
+
+                <td>${user.id}</td>
+
+                <td>${user.username}</td>
+
+                <td>${user.role}</td>
+
+                <td>
+
+                    <button
+                        class="btn btn-warning btn-sm"
+                        onclick="resetPassword(${user.id}, '${user.username}')">
+
+                        Reset Password
+
+                    </button>
+
+                </td>
+
+            </tr>
+
+        `;
+
+    });
+
+}
+
+
+async function createUser() {
+
+    const username =
+        document.getElementById("username").value.trim();
+
+    const password =
+        document.getElementById("password").value;
+
+    const role =
+        document.getElementById("role").value;
+
+    if (!username || !password) {
+
+        alert("Username and password are required");
+
+        return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    const response = await fetch("/users", {
+
+        method: "POST",
+
+        headers: {
+
+            "Content-Type": "application/json",
+
+            Authorization: `Bearer ${token}`
+
+        },
+
+        body: JSON.stringify({
+
+            username: username,
+            password: password,
+            role: role
+
+        })
+
+    });
+
+    if (response.ok) {
+
+        document.getElementById("username").value = "";
+        document.getElementById("password").value = "";
+
+        loadUsers();
+
+        alert("User created successfully");
+
+    } else if (response.status === 401) {
+
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+
+        window.location.href = "/login";
+
+    } else if (response.status === 403) {
+
+        alert("Access denied");
+
+    } else {
+
+        const error = await response.json();
+
+        alert(error.detail || "Error creating user");
+
+    }
+
+}
+
+
+async function resetPassword(userId, username) {
+
+    const newPassword = prompt(
+        `Enter new password for ${username}:`
+    );
+
+    if (newPassword === null) {
+
+        return;
+    }
+
+    if (newPassword.trim() === "") {
+
+        alert("Password cannot be empty");
+
+        return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    const response = await fetch(
+        `/users/${userId}/reset-password?new_password=${encodeURIComponent(newPassword)}`,
+        {
+            method: "PUT",
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        }
+    );
+
+    if (response.ok) {
+
+        alert("Password reset successfully");
+
+    } else if (response.status === 401) {
+
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+
+        window.location.href = "/login";
+
+    } else if (response.status === 403) {
+
+        alert("Access denied");
+
+    } else {
+
+        const error = await response.json();
+
+        alert(error.detail || "Error resetting password");
+
+    }
+
+}
+
+</script>
+
+
+<body>
+
+<div id="navigation"></div>
+
+
+<div class="container mt-5">
+
+    <h1>Users</h1>
+
+
+    <div class="card p-4 mb-4">
+
+        <h4>Create User</h4>
+
+
+        <input
+            id="username"
+            class="form-control mb-2"
+            placeholder="Username">
+
+
+        <input
+            id="password"
+            class="form-control mb-2"
+            type="password"
+            placeholder="Password">
+
+
+        <select
+            id="role"
+            class="form-select mb-3">
+
+            <option value="warehouse">
+                Warehouse
+            </option>
+
+            <option value="expeditor">
+                Expeditor
+            </option>
+
+            <option value="admin">
+                Admin
+            </option>
+
+        </select>
+
+
+        <button
+            class="btn btn-success"
+            onclick="createUser()">
+
+            Create User
+
+        </button>
+
+    </div>
+
+
+    <table class="table table-bordered table-hover">
+
+        <thead class="table-dark">
+
+            <tr>
+
+                <th>ID</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Actions</th>
+
+            </tr>
+
+        </thead>
+
+
+        <tbody id="users-table">
+
+        </tbody>
+
+    </table>
+
+</div>
+
+
+<script>
+
+window.onload = function () {
+
+    loadNavigation();
+    loadUsers();
+
+};
+
+</script>
+
+
+</body>
+
+</html>
