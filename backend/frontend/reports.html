@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 
@@ -289,26 +288,109 @@
 
             </section>
 
+            
             <!-- Stock Movements Report -->
             <section
                 id="movements-report"
                 class="report-section d-none">
 
                 <div class="report-card shadow-sm">
-                    <h4>Stock Movements</h4>
 
-                    <div class="report-placeholder">
-                        <div>
-                            <h5>Stock Movement History</h5>
-                            <p class="mb-0">
-                                Incoming stock, order deductions and write-offs
-                                will be available here.
-                            </p>
+                    <h4 class="mb-4">Stock Movements Report</h4>
+
+                    <div class="row g-3 align-items-end">
+
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <label for="movement-date-from" class="form-label">
+                                From Date
+                            </label>
+                            <input
+                                type="date"
+                                id="movement-date-from"
+                                class="form-control"
+                            >
                         </div>
+
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <label for="movement-date-to" class="form-label">
+                                To Date
+                            </label>
+                            <input
+                                type="date"
+                                id="movement-date-to"
+                                class="form-control"
+                            >
+                        </div>
+
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <label for="movement-type" class="form-label">
+                                Movement Type
+                            </label>
+                            <select id="movement-type" class="form-select">
+                                <option value="">All Operations</option>
+                                <option value="RECEIPT">RECEIPT</option>
+                                <option value="ORDER">ORDER</option>
+                                <option value="WRITE_OFF">WRITE_OFF</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <button
+                                type="button"
+                                class="btn btn-primary w-100"
+                                onclick="loadStockMovementsReport()">
+                                Generate Report
+                            </button>
+                        </div>
+
+                        <div class="col-12">
+                            <button
+                                type="button"
+                                class="btn btn-success"
+                                onclick="exportStockMovementsExcel()">
+                                Export to Excel
+                            </button>
+                        </div>
+
                     </div>
+
+                </div>
+
+                <div class="report-card shadow-sm">
+
+                    <div class="table-responsive">
+
+                        <table class="table table-bordered table-hover align-middle mb-0">
+
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Date</th>
+                                    <th>Product</th>
+                                    <th>Type</th>
+                                    <th>Quantity</th>
+                                    <th>Reason</th>
+                                    <th>User</th>
+                                    <th>Order ID</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="movements-table">
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted">
+                                        Select filters and generate the report.
+                                    </td>
+                                </tr>
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
                 </div>
 
             </section>
+
 
             <!-- Inventory Report -->
             <section
@@ -572,6 +654,204 @@ async function exportOrdersExcel() {
 
     }
 }
+
+
+
+function buildStockMovementsParams() {
+
+    const dateFrom =
+        document.getElementById("movement-date-from").value;
+
+    const dateTo =
+        document.getElementById("movement-date-to").value;
+
+    const movementType =
+        document.getElementById("movement-type").value;
+
+    const params = new URLSearchParams();
+
+    if (dateFrom) {
+        params.append("date_from", dateFrom + "T00:00:00");
+    }
+
+    if (dateTo) {
+        params.append("date_to", dateTo + "T23:59:59");
+    }
+
+    if (movementType) {
+        params.append("movement_type", movementType);
+    }
+
+    return params;
+}
+
+
+async function loadStockMovementsReport() {
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+        window.location.href = "/login";
+        return;
+    }
+
+    const params = buildStockMovementsParams();
+
+    const table = document.getElementById("movements-table");
+
+    table.innerHTML = `
+        <tr>
+            <td colspan="8" class="text-center text-muted">
+                Loading stock movements...
+            </td>
+        </tr>
+    `;
+
+    try {
+
+        const response = await fetch(
+            `/reports/stock-movements?${params.toString()}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+
+        if (response.status === 401) {
+            handleUnauthorized();
+            return;
+        }
+
+        if (response.status === 403) {
+            alert("Access denied");
+            return;
+        }
+
+        if (!response.ok) {
+            alert("Error loading stock movements report");
+            return;
+        }
+
+        const movements = await response.json();
+
+        table.innerHTML = "";
+
+        if (!Array.isArray(movements) || movements.length === 0) {
+            table.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center">
+                        No stock movements found
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        movements.forEach(movement => {
+
+            const row = document.createElement("tr");
+
+            const values = [
+                movement.id,
+                movement.created_at
+                    ? new Date(movement.created_at).toLocaleString()
+                    : "",
+                movement.product_name,
+                movement.movement_type,
+                movement.quantity,
+                movement.reason || "",
+                movement.username,
+                movement.order_id ?? ""
+            ];
+
+            values.forEach(value => {
+
+                const cell = document.createElement("td");
+                cell.textContent = value ?? "";
+                row.appendChild(cell);
+
+            });
+
+            table.appendChild(row);
+
+        });
+
+    } catch (error) {
+
+        console.error("Stock movements report error:", error);
+
+        table.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center text-danger">
+                    Could not load stock movements. Please try again.
+                </td>
+            </tr>
+        `;
+
+    }
+}
+
+
+async function exportStockMovementsExcel() {
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+        window.location.href = "/login";
+        return;
+    }
+
+    const params = buildStockMovementsParams();
+
+    try {
+
+        const response = await fetch(
+            `/reports/stock-movements/excel?${params.toString()}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+
+        if (response.status === 401) {
+            handleUnauthorized();
+            return;
+        }
+
+        if (response.status === 403) {
+            alert("Access denied");
+            return;
+        }
+
+        if (!response.ok) {
+            alert("Error exporting stock movements to Excel");
+            return;
+        }
+
+        const blob = await response.blob();
+
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = "stock_movements_report.xlsx";
+
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        window.URL.revokeObjectURL(url);
+
+    } catch (error) {
+
+        console.error("Stock movements Excel export error:", error);
+        alert("Could not export Excel. Please try again.");
+
+    }
+}
+
 
 
 window.onload = function () {
