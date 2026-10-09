@@ -268,25 +268,98 @@
 
             </section>
 
+            
             <!-- Products Report -->
             <section
                 id="products-report"
                 class="report-section d-none">
 
                 <div class="report-card shadow-sm">
-                    <h4>Products Report</h4>
+                    <h4 class="mb-4">Products Report</h4>
 
-                    <div class="report-placeholder">
-                        <div>
-                            <h5>Products Report</h5>
-                            <p class="mb-0">
-                                This report will be implemented in a later step.
-                            </p>
+                    <div class="row g-3 align-items-end">
+
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <label for="product-search" class="form-label">
+                                Product Name
+                            </label>
+                            <input
+                                type="text"
+                                id="product-search"
+                                class="form-control"
+                                placeholder="Search product..."
+                            >
                         </div>
+
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <label for="product-category" class="form-label">
+                                Category
+                            </label>
+                            <select id="product-category" class="form-select">
+                                <option value="">All Categories</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <label for="product-stock-status" class="form-label">
+                                Stock Status
+                            </label>
+                            <select id="product-stock-status" class="form-select">
+                                <option value="">All Products</option>
+                                <option value="in_stock">In Stock</option>
+                                <option value="out_of_stock">Out of Stock</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <button
+                                type="button"
+                                class="btn btn-primary w-100"
+                                onclick="loadProductsReport()">
+                                Generate Report
+                            </button>
+                        </div>
+
+                        <div class="col-12">
+                            <button
+                                type="button"
+                                class="btn btn-success"
+                                onclick="exportProductsExcel()">
+                                Export to Excel
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="report-card shadow-sm">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover align-middle mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Product</th>
+                                    <th>Description</th>
+                                    <th>Category</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="products-report-table">
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted">
+                                        Select filters and generate the report.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
             </section>
+
 
             
             <!-- Stock Movements Report -->
@@ -854,10 +927,229 @@ async function exportStockMovementsExcel() {
 
 
 
+async function loadProductCategories() {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+        window.location.href = "/login";
+        return;
+    }
+
+    const select = document.getElementById("product-category");
+
+    try {
+        const response = await fetch("/categories", {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        if (response.status === 401) {
+            handleUnauthorized();
+            return;
+        }
+
+        if (!response.ok) {
+            console.error("Could not load categories");
+            return;
+        }
+
+        const categories = await response.json();
+
+        select.innerHTML = '<option value="">All Categories</option>';
+
+        categories.forEach(category => {
+            const option = document.createElement("option");
+            option.value = category.id;
+            option.textContent = category.name;
+            select.appendChild(option);
+        });
+
+    } catch (error) {
+        console.error("Categories loading error:", error);
+    }
+}
+
+
+function buildProductsReportParams() {
+    const search = document.getElementById("product-search").value.trim();
+    const categoryId = document.getElementById("product-category").value;
+    const stockStatus = document.getElementById("product-stock-status").value;
+
+    const params = new URLSearchParams();
+
+    if (search) {
+        params.append("search", search);
+    }
+
+    if (categoryId) {
+        params.append("category_id", categoryId);
+    }
+
+    if (stockStatus) {
+        params.append("stock_status", stockStatus);
+    }
+
+    return params;
+}
+
+
+async function loadProductsReport() {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+        window.location.href = "/login";
+        return;
+    }
+
+    const params = buildProductsReportParams();
+    const table = document.getElementById("products-report-table");
+
+    table.innerHTML = `
+        <tr>
+            <td colspan="7" class="text-center text-muted">
+                Loading products...
+            </td>
+        </tr>
+    `;
+
+    try {
+        const response = await fetch(
+            `/reports/products?${params.toString()}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+
+        if (response.status === 401) {
+            handleUnauthorized();
+            return;
+        }
+
+        if (response.status === 403) {
+            alert("Access denied");
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error("Error loading products report");
+        }
+
+        const products = await response.json();
+
+        table.innerHTML = "";
+
+        if (!Array.isArray(products) || products.length === 0) {
+            table.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center">
+                        No products found
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        products.forEach(product => {
+            const row = document.createElement("tr");
+
+            const values = [
+                product.id,
+                product.name,
+                product.description || "",
+                product.category_name || "",
+                product.quantity,
+                product.price,
+                product.created_at
+                    ? new Date(product.created_at).toLocaleString()
+                    : ""
+            ];
+
+            values.forEach(value => {
+                const cell = document.createElement("td");
+                cell.textContent = value ?? "";
+                row.appendChild(cell);
+            });
+
+            table.appendChild(row);
+        });
+
+    } catch (error) {
+        console.error("Products report error:", error);
+
+        table.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center text-danger">
+                    Could not load products. Please try again.
+                </td>
+            </tr>
+        `;
+    }
+}
+
+
+async function exportProductsExcel() {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+        window.location.href = "/login";
+        return;
+    }
+
+    const params = buildProductsReportParams();
+
+    try {
+        const response = await fetch(
+            `/reports/products/excel?${params.toString()}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+
+        if (response.status === 401) {
+            handleUnauthorized();
+            return;
+        }
+
+        if (response.status === 403) {
+            alert("Access denied");
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error("Error exporting products report");
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = "products_report.xlsx";
+
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        window.URL.revokeObjectURL(url);
+
+    } catch (error) {
+        console.error("Products Excel export error:", error);
+        alert("Could not export Excel. Please try again.");
+    }
+}
+
+
+
 window.onload = function () {
 
     loadNavigation();
     loadOrdersReport();
+    loadProductCategories();
 
 };
 </script>

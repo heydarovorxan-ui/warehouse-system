@@ -260,3 +260,121 @@ def export_stock_movements_report_excel(
                 "attachment; filename=stock_movements_report.xlsx"
         }
     )
+
+
+
+@router.get("/reports/products")
+def get_products_report(
+    category_id: int | None = None,
+    search: str | None = None,
+    stock_status: str | None = None,
+    current_user=Depends(
+        require_roles("admin", "warehouse", "expeditor")
+    ),
+    db: Session = Depends(get_db)
+):
+    query = db.query(Product)
+
+    if category_id:
+        query = query.filter(
+            Product.category_id == category_id
+        )
+
+    if search:
+        query = query.filter(
+            Product.name.ilike(f"%{search}%")
+        )
+
+    if stock_status == "in_stock":
+        query = query.filter(Product.quantity > 0)
+    elif stock_status == "out_of_stock":
+        query = query.filter(Product.quantity == 0)
+
+    products = query.order_by(Product.name.asc()).all()
+
+    result = []
+
+    for product in products:
+        result.append({
+            "id": product.id,
+            "name": product.name,
+            "description": product.description,
+            "quantity": product.quantity,
+            "price": product.price,
+            "category_id": product.category_id,
+            "category_name": product.category_name,
+            "created_at": product.created_at
+        })
+
+    return result
+
+
+@router.get("/reports/products/excel")
+def export_products_report_excel(
+    category_id: int | None = None,
+    search: str | None = None,
+    stock_status: str | None = None,
+    current_user=Depends(
+        require_roles("admin", "warehouse", "expeditor")
+    ),
+    db: Session = Depends(get_db)
+):
+    query = db.query(Product)
+
+    if category_id:
+        query = query.filter(
+            Product.category_id == category_id
+        )
+
+    if search:
+        query = query.filter(
+            Product.name.ilike(f"%{search}%")
+        )
+
+    if stock_status == "in_stock":
+        query = query.filter(Product.quantity > 0)
+    elif stock_status == "out_of_stock":
+        query = query.filter(Product.quantity == 0)
+
+    products = query.order_by(Product.name.asc()).all()
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "Products Report"
+
+    worksheet.append([
+        "ID",
+        "Product",
+        "Description",
+        "Category",
+        "Quantity",
+        "Price",
+        "Created"
+    ])
+
+    for product in products:
+        worksheet.append([
+            product.id,
+            product.name,
+            product.description or "",
+            product.category_name or "",
+            product.quantity,
+            float(product.price),
+            product.created_at
+        ])
+
+    output = BytesIO()
+    workbook.save(output)
+    output.seek(0)
+
+    return StreamingResponse(
+        output,
+        media_type=(
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        ),
+        headers={
+            "Content-Disposition":
+                "attachment; filename=products_report.xlsx"
+        }
+    )
