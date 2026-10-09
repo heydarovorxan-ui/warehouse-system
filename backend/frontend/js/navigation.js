@@ -18,6 +18,10 @@ function loadNavigation() {
 
                 <div class="navbar-nav">
 
+                    <a class="nav-link" href="/dashboard-page">
+                        Dashboard
+                    </a>
+
                     <a class="nav-link" href="/products-page">
                         Products
                     </a>
@@ -32,6 +36,10 @@ function loadNavigation() {
 
                     <a class="nav-link" href="/stock-movements-page">
                         Stock Movements
+                    </a>
+                    
+                    <a class="nav-link" href="/reports-page">
+                        Reports
                     </a>
     `;
 

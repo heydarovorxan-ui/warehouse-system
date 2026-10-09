@@ -1,0 +1,586 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Reports</title>
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <script src="/static/js/navigation.js"></script>
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .reports-layout {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+        }
+
+        .reports-sidebar {
+            width: 250px;
+            min-width: 250px;
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 20px 12px;
+        }
+
+        .reports-sidebar h5 {
+            padding: 0 10px;
+            margin-bottom: 16px;
+        }
+
+        .report-nav-link {
+            display: block;
+            width: 100%;
+            padding: 11px 12px;
+            margin-bottom: 5px;
+            border: none;
+            border-radius: 7px;
+            background: transparent;
+            color: #495057;
+            text-align: left;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .report-nav-link:hover {
+            background: #f1f3f5;
+            color: #212529;
+        }
+
+        .report-nav-link.active {
+            background: #e7f1ff;
+            color: #0d6efd;
+            font-weight: 600;
+        }
+
+        .reports-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .report-card {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .report-placeholder {
+            min-height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: #6c757d;
+        }
+
+        @media (max-width: 767.98px) {
+            .reports-layout {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .reports-sidebar {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .reports-content {
+                width: 100%;
+            }
+
+            .report-card {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="navigation"></div>
+
+<div class="container-fluid px-3 px-md-4 mt-4 mb-5">
+
+    <h1 class="mb-4">Reports</h1>
+
+    <div class="reports-layout">
+
+        <!-- Reports sidebar -->
+        <aside class="reports-sidebar">
+
+            <h5>Report Types</h5>
+
+            <button
+                type="button"
+                class="report-nav-link active"
+                data-report="orders"
+                onclick="showReport('orders', this)">
+                Orders Report
+            </button>
+
+            <button
+                type="button"
+                class="report-nav-link"
+                data-report="products"
+                onclick="showReport('products', this)">
+                Products Report
+            </button>
+
+            <button
+                type="button"
+                class="report-nav-link"
+                data-report="movements"
+                onclick="showReport('movements', this)">
+                Stock Movements
+            </button>
+
+            <button
+                type="button"
+                class="report-nav-link"
+                data-report="inventory"
+                onclick="showReport('inventory', this)">
+                Inventory Report
+            </button>
+
+            <button
+                type="button"
+                class="report-nav-link"
+                data-report="users"
+                onclick="showReport('users', this)">
+                Users Activity
+            </button>
+
+        </aside>
+
+        <!-- Reports content -->
+        <main class="reports-content">
+
+            <!-- Orders Report -->
+            <section id="orders-report" class="report-section">
+
+                <div class="report-card shadow-sm">
+
+                    <h4 class="mb-4">Orders Report</h4>
+
+                    <div class="row g-3 align-items-end">
+
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <label for="date-from" class="form-label">
+                                From Date
+                            </label>
+
+                            <input
+                                type="date"
+                                id="date-from"
+                                class="form-control"
+                            >
+                        </div>
+
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <label for="date-to" class="form-label">
+                                To Date
+                            </label>
+
+                            <input
+                                type="date"
+                                id="date-to"
+                                class="form-control"
+                            >
+                        </div>
+
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <label for="status" class="form-label">
+                                Status
+                            </label>
+
+                            <select id="status" class="form-select">
+                                <option value="">All</option>
+                                <option value="NEW">NEW</option>
+                                <option value="CONFIRMED">CONFIRMED</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <button
+                                type="button"
+                                class="btn btn-primary w-100"
+                                onclick="loadOrdersReport()">
+                                Generate Report
+                            </button>
+                        </div>
+
+                        <div class="col-12">
+                            <button
+                                type="button"
+                                class="btn btn-success"
+                                onclick="exportOrdersExcel()">
+                                Export to Excel
+                            </button>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="report-card shadow-sm">
+
+                    <div class="table-responsive">
+
+                        <table class="table table-bordered table-hover align-middle mb-0">
+
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Customer</th>
+                                    <th>Phone</th>
+                                    <th>Address</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="orders-table">
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">
+                                        Loading orders...
+                                    </td>
+                                </tr>
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- Products Report -->
+            <section
+                id="products-report"
+                class="report-section d-none">
+
+                <div class="report-card shadow-sm">
+                    <h4>Products Report</h4>
+
+                    <div class="report-placeholder">
+                        <div>
+                            <h5>Products Report</h5>
+                            <p class="mb-0">
+                                This report will be implemented in a later step.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- Stock Movements Report -->
+            <section
+                id="movements-report"
+                class="report-section d-none">
+
+                <div class="report-card shadow-sm">
+                    <h4>Stock Movements</h4>
+
+                    <div class="report-placeholder">
+                        <div>
+                            <h5>Stock Movement History</h5>
+                            <p class="mb-0">
+                                Incoming stock, order deductions and write-offs
+                                will be available here.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- Inventory Report -->
+            <section
+                id="inventory-report"
+                class="report-section d-none">
+
+                <div class="report-card shadow-sm">
+                    <h4>Inventory Report</h4>
+
+                    <div class="report-placeholder">
+                        <div>
+                            <h5>Current Inventory</h5>
+                            <p class="mb-0">
+                                Current quantities and inventory value
+                                will be available here.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- Users Activity Report -->
+            <section
+                id="users-report"
+                class="report-section d-none">
+
+                <div class="report-card shadow-sm">
+                    <h4>Users Activity</h4>
+
+                    <div class="report-placeholder">
+                        <div>
+                            <h5>User Activity</h5>
+                            <p class="mb-0">
+                                Warehouse operations by user will be available here.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
+<script>
+function showReport(reportName, clickedButton) {
+
+    document.querySelectorAll(".report-section").forEach(section => {
+        section.classList.add("d-none");
+    });
+
+    const selectedSection = document.getElementById(
+        reportName + "-report"
+    );
+
+    if (selectedSection) {
+        selectedSection.classList.remove("d-none");
+    }
+
+    document.querySelectorAll(".report-nav-link").forEach(button => {
+        button.classList.remove("active");
+    });
+
+    clickedButton.classList.add("active");
+}
+
+
+function buildOrdersReportParams() {
+
+    const dateFrom = document.getElementById("date-from").value;
+    const dateTo = document.getElementById("date-to").value;
+    const status = document.getElementById("status").value;
+
+    const params = new URLSearchParams();
+
+    if (dateFrom) {
+        params.append("date_from", dateFrom + "T00:00:00");
+    }
+
+    if (dateTo) {
+        params.append("date_to", dateTo + "T23:59:59");
+    }
+
+    if (status) {
+        params.append("status", status);
+    }
+
+    return params;
+}
+
+
+function handleUnauthorized() {
+
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+
+    window.location.href = "/login";
+}
+
+
+async function loadOrdersReport() {
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+        window.location.href = "/login";
+        return;
+    }
+
+    const params = buildOrdersReportParams();
+
+    const table = document.getElementById("orders-table");
+
+    table.innerHTML = `
+        <tr>
+            <td colspan="6" class="text-center text-muted">
+                Loading orders...
+            </td>
+        </tr>
+    `;
+
+    try {
+
+        const response = await fetch(
+            `/reports/orders?${params.toString()}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+
+        if (response.status === 401) {
+            handleUnauthorized();
+            return;
+        }
+
+        if (response.status === 403) {
+            alert("Access denied");
+            return;
+        }
+
+        if (!response.ok) {
+            alert("Error loading orders report");
+            return;
+        }
+
+        const orders = await response.json();
+
+        table.innerHTML = "";
+
+        if (!Array.isArray(orders) || orders.length === 0) {
+            table.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center">
+                        No orders found
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        orders.forEach(order => {
+
+            const row = document.createElement("tr");
+
+            [
+                order.id,
+                order.customer_name,
+                order.customer_phone,
+                order.customer_address || "",
+                order.status,
+                order.created_at
+            ].forEach(value => {
+
+                const cell = document.createElement("td");
+                cell.textContent = value ?? "";
+                row.appendChild(cell);
+
+            });
+
+            table.appendChild(row);
+
+        });
+
+    } catch (error) {
+
+        console.error("Orders report error:", error);
+
+        table.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-danger">
+                    Could not load orders. Please try again.
+                </td>
+            </tr>
+        `;
+
+    }
+}
+
+
+async function exportOrdersExcel() {
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+        window.location.href = "/login";
+        return;
+    }
+
+    const params = buildOrdersReportParams();
+
+    try {
+
+        const response = await fetch(
+            `/reports/orders/excel?${params.toString()}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+
+        if (response.status === 401) {
+            handleUnauthorized();
+            return;
+        }
+
+        if (response.status === 403) {
+            alert("Access denied");
+            return;
+        }
+
+        if (!response.ok) {
+            alert("Error exporting Excel");
+            return;
+        }
+
+        const blob = await response.blob();
+
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = "orders_report.xlsx";
+
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        window.URL.revokeObjectURL(url);
+
+    } catch (error) {
+
+        console.error("Excel export error:", error);
+        alert("Could not export Excel. Please try again.");
+
+    }
+}
+
+
+window.onload = function () {
+
+    loadNavigation();
+    loadOrdersReport();
+
+};
+</script>
+
+</body>
+</html>

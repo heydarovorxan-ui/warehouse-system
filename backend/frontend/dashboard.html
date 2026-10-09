@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Dashboard</title>
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet">
+
+    <script src="/static/js/navigation.js"></script>
+
+</head>
+
+
+<script>
+
+async function loadDashboard() {
+
+    const token = localStorage.getItem("token");
+
+    const response = await fetch("/dashboard", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+
+    if (response.status === 401) {
+
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+
+        window.location.href = "/login";
+
+        return;
+    }
+
+    if (response.status === 403) {
+
+        alert("Access denied");
+
+        window.location.href = "/products-page";
+
+        return;
+    }
+
+    const data = await response.json();
+
+
+    document.getElementById("total-products").innerText =
+        data.total_products;
+
+    document.getElementById("total-categories").innerText =
+        data.total_categories;
+
+    document.getElementById("total-orders").innerText =
+        data.total_orders;
+
+    document.getElementById("stock-value").innerText =
+        data.stock_value.toLocaleString();
+
+
+    document.getElementById("new-orders").innerText =
+        data.new_orders;
+
+    document.getElementById("confirmed-orders").innerText =
+        data.confirmed_orders;
+
+    document.getElementById("orders-this-month").innerText =
+        data.orders_this_month;
+
+
+    document.getElementById("products-this-month").innerText =
+        data.products_this_month;
+
+    document.getElementById("received-this-month").innerText =
+        data.received_this_month;
+
+    document.getElementById("written-off-this-month").innerText =
+        data.written_off_this_month;
+
+}
+
+</script>
+
+
+<body>
+
+<div id="navigation"></div>
+
+
+<div class="container mt-5">
+
+    <h1 class="mb-4">Dashboard</h1>
+
+
+    <!-- General Information -->
+
+    <h4 class="mb-3">General Information</h4>
+
+    <div class="row g-4 mb-5">
+
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm">
+
+                <div class="card-body">
+
+                    <h6 class="text-muted">
+                        Total Products
+                    </h6>
+
+                    <h2 id="total-products">
+                        0
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm">
+
+                <div class="card-body">
+
+                    <h6 class="text-muted">
+                        Categories
+                    </h6>
+
+                    <h2 id="total-categories">
+                        0
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm">
+
+                <div class="card-body">
+
+                    <h6 class="text-muted">
+                        Total Orders
+                    </h6>
+
+                    <h2 id="total-orders">
+                        0
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm">
+
+                <div class="card-body">
+
+                    <h6 class="text-muted">
+                        Stock Value
+                    </h6>
+
+                    <h2 id="stock-value">
+                        0
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- Orders -->
+
+    <h4 class="mb-3">Orders</h4>
+
+    <div class="row g-4 mb-5">
+
+
+        <div class="col-md-4">
+
+            <div class="card shadow-sm">
+
+                <div class="card-body">
+
+                    <h6 class="text-muted">
+                        New Orders
+                    </h6>
+
+                    <h2 id="new-orders">
+                        0
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-4">
+
+            <div class="card shadow-sm">
+
+                <div class="card-body">
+
+                    <h6 class="text-muted">
+                        Confirmed Orders
+                    </h6>
+
+                    <h2 id="confirmed-orders">
+                        0
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-4">
+
+            <div class="card shadow-sm">
+
+                <div class="card-body">
+
+                    <h6 class="text-muted">
+                        Orders This Month
+                    </h6>
+
+                    <h2 id="orders-this-month">
+                        0
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- Stock -->
+
+    <h4 class="mb-3">Stock</h4>
+
+    <div class="row g-4">
+
+
+        <div class="col-md-4">
+
+            <div class="card shadow-sm">
+
+                <div class="card-body">
+
+                    <h6 class="text-muted">
+                        Products Added This Month
+                    </h6>
+
+                    <h2 id="products-this-month">
+                        0
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-4">
+
+            <div class="card shadow-sm">
+
+                <div class="card-body">
+
+                    <h6 class="text-muted">
+                        Received This Month
+                    </h6>
+
+                    <h2 id="received-this-month">
+                        0
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-4">
+
+            <div class="card shadow-sm">
+
+                <div class="card-body">
+
+                    <h6 class="text-muted">
+                        Written Off This Month
+                    </h6>
+
+                    <h2 id="written-off-this-month">
+                        0
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+window.onload = function () {
+
+    loadNavigation();
+    loadDashboard();
+
+};
+
+</script>
+
+
+</body>
+
+</html>
