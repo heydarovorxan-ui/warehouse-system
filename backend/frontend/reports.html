@@ -64,6 +64,38 @@
             font-weight: 600;
         }
 
+        .report-submenu {
+            margin: 0 0 8px 0;
+            padding-left: 14px;
+            border-left: 2px solid #dee2e6;
+            margin-left: 16px;
+        }
+
+        .report-subnav-link {
+            display: block;
+            width: 100%;
+            padding: 9px 10px;
+            margin-bottom: 4px;
+            border: none;
+            border-radius: 7px;
+            background: transparent;
+            color: #6c757d;
+            text-align: left;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .report-subnav-link:hover {
+            background: #f1f3f5;
+            color: #212529;
+        }
+
+        .report-subnav-link.active {
+            background: #e7f1ff;
+            color: #0d6efd;
+            font-weight: 600;
+        }
+
         .reports-content {
             flex: 1;
             min-width: 0;
@@ -158,10 +190,34 @@
             <button
                 type="button"
                 class="report-nav-link"
-                data-report="users"
-                onclick="showReport('users', this)">
+                id="users-activity-toggle"
+                aria-expanded="false"
+                aria-controls="users-activity-submenu"
+                onclick="toggleUsersSubmenu(this)">
+                <span>👥</span>
                 Users Activity
+                <span class="float-end">▾</span>
             </button>
+
+            <div id="users-activity-submenu" class="report-submenu d-none">
+
+                <button
+                    type="button"
+                    class="report-subnav-link"
+                    data-report="user-stock-operations"
+                    onclick="showReport('user-stock-operations', this)">
+                    📦 Stock Operations
+                </button>
+
+                <button
+                    type="button"
+                    class="report-subnav-link"
+                    data-report="audit-log"
+                    onclick="showReport('audit-log', this)">
+                    🛡️ Audit Log
+                </button>
+
+            </div>
 
         </aside>
 
@@ -513,8 +569,27 @@
 </div>
 
 <script>
-function showReport(reportName, clickedButton) {
 
+
+function toggleUsersSubmenu(button) {
+    const submenu = document.getElementById("users-activity-submenu");
+    const isExpanded = button.getAttribute("aria-expanded") === "true";
+
+    submenu.classList.toggle("d-none", isExpanded);
+    button.setAttribute("aria-expanded", String(!isExpanded));
+
+    if (!isExpanded) {
+        button.classList.add("active");
+    } else {
+        const selectedSubmenuItem = submenu.querySelector(".active");
+
+        if (!selectedSubmenuItem) {
+            button.classList.remove("active");
+        }
+    }
+}
+
+function showReport(reportName, clickedButton) {
     document.querySelectorAll(".report-section").forEach(section => {
         section.classList.add("d-none");
     });
@@ -527,12 +602,23 @@ function showReport(reportName, clickedButton) {
         selectedSection.classList.remove("d-none");
     }
 
-    document.querySelectorAll(".report-nav-link").forEach(button => {
-        button.classList.remove("active");
-    });
+    document.querySelectorAll(".report-nav-link, .report-subnav-link")
+        .forEach(button => {
+            button.classList.remove("active");
+        });
 
     clickedButton.classList.add("active");
+
+    if (clickedButton.classList.contains("report-subnav-link")) {
+        const submenu = document.getElementById("users-activity-submenu");
+        const parentButton = document.getElementById("users-activity-toggle");
+
+        submenu.classList.remove("d-none");
+        parentButton.setAttribute("aria-expanded", "true");
+        parentButton.classList.add("active");
+    }
 }
+
 
 
 function buildOrdersReportParams() {
